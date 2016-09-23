@@ -23606,9 +23606,9 @@ var a=[
 
 
 var result = a.map(function(element) {
-	return +element[0] + ',' + (+element[1]) + ',"' + element[2] + '",' + (+element[3]) + ',"' + element[4] + '","' + element[5] + '",' + (+element[6]) + ',' + (+element[7]) + ',' + (+element[8]) + ',"' + element[9] + '","N/A"';
+	return +element[0] + ',' + (+element[1]) + ',"' + element[2] + '",' + (+element[3]) + ',"' + element[4] + '","' + element[5] + '",' + (+element[6]) + ',' + (+element[7]) + ',' + (+element[8]) + ',"' + element[9] + '","' + element[10] + '"';
 });
-result.unshift('"seq.","numero","nome","idade","tempoTotal","tempoMontanha","classGeral","classMontanha","classIdade","sexo","pais"')
+result.unshift('"seq.","numero","nome","idade","tempoTotal","tempoMontanha","classGeral","classMontanha","classIdade","sexo","percurso"')
 result.forEach(function(el) {
 	console.log(el);
 });
