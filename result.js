@@ -6,7 +6,7 @@ var timeConverter = function timeConverter(time) {
 }
 
 
-[
+var a=[
     [
         "1",
         "6",
