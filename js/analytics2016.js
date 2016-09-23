@@ -1,5 +1,5 @@
 // (It's CSV, but GitHub Pages only gzip's JSON at the moment.)
-d3.csv("data/letape2016.json", function(error, participants) {
+d3.csv("data/letape2016.json", function (error, participants) {
 
     // Various formatters.
     var formatNumber = d3.format(",d"),
@@ -9,7 +9,7 @@ d3.csv("data/letape2016.json", function(error, participants) {
 
     // A nest operator, for grouping the participant list.
     var nestByMinute = d3.nest()
-        .key(function(d) {
+        .key(function (d) {
             return Math.floor(d / 1) * 1;
         });
 
@@ -25,7 +25,7 @@ d3.csv("data/letape2016.json", function(error, participants) {
     }
 
     // A little coercion, since the CSV is untyped.
-    participants.forEach(function(d, i) {
+    participants.forEach(function (d, i) {
         d.index = i;
         d.numero = +d.numero;
         d.idade = +d.idade;
@@ -34,12 +34,12 @@ d3.csv("data/letape2016.json", function(error, participants) {
     });
 
     var maximum = function maximum(data, property) {
-        return d3.max(data, function(d) {
+        return d3.max(data, function (d) {
             return d[property];
         });
     };
     var minimum = function minimum(data, property) {
-        return d3.min(data, function(d) {
+        return d3.min(data, function (d) {
             return d[property];
         });
     };
@@ -53,26 +53,25 @@ d3.csv("data/letape2016.json", function(error, participants) {
     // Create the crossfilter for the relevant dimensions and groups.
     var participant = crossfilter(participants),
         all = participant.groupAll(),
-        tempoT = participant.dimension(function(d) {
+        tempoT = participant.dimension(function (d) {
             return d.tempoTotalM;
         }),
-        temposT = tempoT.group(function(d) {
+        temposT = tempoT.group(function (d) {
             return Math.floor(d / 2) * 2;
         }),
-        montanhaT = participant.dimension(function(d) {
-            return d.tempoMontanhaM;
-        }),
-        montanhasT = montanhaT.group(function(d) {
-            return Math.floor(d / 5) * 5;
-        }),
-        sexo = participant.dimension(function(d) {
+
+        sexo = participant.dimension(function (d) {
             return d.sexo === 'Masculino' ? 1 : 2
         }),
-        sexos = sexo.group();
-    idade = participant.dimension(function(d) {
+        percurso = participant.dimension(function (d) {
+            return d.percurso === 'Percurso Completo' ? 1 : 2
+        }),
+        percursos= percurso.group(),
+        sexos = sexo.group(),
+        idade = participant.dimension(function (d) {
             return d.idade;
         }),
-        idades = idade.group(function(d) {
+        idades = idade.group(function (d) {
             return Math.floor(d / 5) * 5;
         });
 
@@ -82,35 +81,33 @@ d3.csv("data/letape2016.json", function(error, participants) {
 
     var charts = [
         barChart()
-        .dimension(tempoT)
-        .group(temposT).xTickFormat(function(d) {
-            return convertToFormatedHours(d);
-        })
-        .x(d3.scale.linear()
-            .domain([tempoMin, tempoMax])
-            .rangeRound([0, 900])),
+            .dimension(tempoT)
+            .group(temposT).xTickFormat(function (d) {
+                return convertToFormatedHours(d);
+            })
+            .x(d3.scale.linear()
+                .domain([tempoMin, tempoMax])
+                .rangeRound([0, 900])),
         barChart()
-        .dimension(montanhaT)
-        .group(montanhasT).xTickFormat(function(d) {
-            return convertToFormatedHours(d);
-        })
-        .x(d3.scale.linear()
-            .domain([0, 80])
-            .rangeRound([0, 350])),
+            .dimension(percurso)
+            .group(percursos).tickValues([1, 2]).xTickFormat(function (d) {
+                return d === 1 ? 'Completo' : 'Meio';
+            })
+            .x(d3.scale.linear().domain([0, 3]).rangeRound([0, 50])),
         barChart()
-        .dimension(sexo)
-        .group(sexos).tickValues([1, 2]).xTickFormat(function(d) {
-            return d === 1 ? 'M' : 'F';
-        })
-        .x(d3.scale.linear().domain([1, 3]).rangeRound([0, 50])),
+            .dimension(sexo)
+            .group(sexos).tickValues([1, 2]).xTickFormat(function (d) {
+                return d === 1 ? 'M' : 'F';
+            })
+            .x(d3.scale.linear().domain([1, 3]).rangeRound([0, 50])),
         barChart()
-        .dimension(idade)
-        .group(idades)
-        .x(d3.scale.linear().domain([10, 70]).rangeRound([0, 350]))
+            .dimension(idade)
+            .group(idades)
+            .x(d3.scale.linear().domain([10, 70]).rangeRound([0, 350]))
 
     ];
 
-    
+
 
 
     // Given our array of charts, which we assume are in the same order as the
@@ -118,8 +115,8 @@ d3.csv("data/letape2016.json", function(error, participants) {
     // We also listen to the chart's brush events to update the display.
     var chart = d3.selectAll(".chart")
         .data(charts)
-        .each(function(chart) {
-            
+        .each(function (chart) {
+
             chart.x().rangeRound([0, $(this.parentNode).width()]);// adjusting size
             chart.on("brush", renderAll).on("brushend", renderAll);
         });
@@ -135,7 +132,7 @@ d3.csv("data/letape2016.json", function(error, participants) {
 
     // Renders the specified chart or list.
     function render(method) {
-        console.log('render'+this);
+        console.log('render' + this);
         d3.select(this).call(method);
     }
 
@@ -147,36 +144,36 @@ d3.csv("data/letape2016.json", function(error, participants) {
     }
 
 
-    window.filter = function(filters) {
-        filters.forEach(function(d, i) {
+    window.filter = function (filters) {
+        filters.forEach(function (d, i) {
             charts[i].filter(d);
         });
         renderAll();
     };
 
-    window.reset = function(i) {
+    window.reset = function (i) {
         charts[i].filter(null);
         renderAll();
     };
-    function toTitleCase(str){
-    return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
-}
+    function toTitleCase(str) {
+        return str.replace(/\w\S*/g, function (txt) { return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase(); });
+    }
 
     function participantList(div) {
         var participantsByTime = tempoT.bottom(50);
-        div.each(function() {
+        div.each(function () {
             var participantByTime = d3.select(this).selectAll(".tempo")
-                .data(participantsByTime,function(d){console.log(d.index);return d.index});
+                .data(participantsByTime, function (d) { console.log(d.index); return d.index });
 
             participantByTime.enter().append("div").attr("class", "tempo")
-                .text(function(d) {
-                    return toTitleCase(d.nome)+' ('+d.tempoTotal+')' ;
+                .text(function (d) {
+                    return toTitleCase(d.nome) + ' (' + d.tempoTotal + ')';
                 });
 
             participantByTime.exit().remove();
             participantByTime.order();
 
-           
+
         });
     }
 
@@ -184,11 +181,11 @@ d3.csv("data/letape2016.json", function(error, participants) {
         if (!barChart.id) barChart.id = 0;
 
         var margin = {
-                top: 10,
-                right: 10,
-                bottom: 20,
-                left: 10
-            },
+            top: 10,
+            right: 10,
+            bottom: 20,
+            left: 10
+        },
             x,
             y = d3.scale.linear().range([100, 0]),
             id = barChart.id++,
@@ -205,7 +202,7 @@ d3.csv("data/letape2016.json", function(error, participants) {
 
             y.domain([0, group.top(1)[0].value]);
 
-            div.each(function() {
+            div.each(function () {
                 var div = d3.select(this),
                     g = div.select("g");
 
@@ -232,7 +229,7 @@ d3.csv("data/letape2016.json", function(error, participants) {
                     g.selectAll(".bar")
                         .data(["background", "foreground"])
                         .enter().append("path")
-                        .attr("class", function(d) {
+                        .attr("class", function (d) {
                             return d + " bar";
                         })
                         .datum(group.all());
@@ -291,12 +288,12 @@ d3.csv("data/letape2016.json", function(error, participants) {
             }
         }
 
-        brush.on("brushstart.chart", function() {
+        brush.on("brushstart.chart", function () {
             var div = d3.select(this.parentNode.parentNode.parentNode);
             div.select(".title a").style("display", null);
         });
 
-        brush.on("brush.chart", function() {
+        brush.on("brush.chart", function () {
             var g = d3.select(this.parentNode),
                 extent = brush.extent();
             if (round) g.select(".brush")
@@ -306,11 +303,11 @@ d3.csv("data/letape2016.json", function(error, participants) {
             g.select("#clip-" + id + " rect")
                 .attr("x", x(extent[0]))
                 .attr("width", x(extent[1]) - x(extent[0]));
-            
+
             dimension.filterRange(extent);
         });
 
-        brush.on("brushend.chart", function() {
+        brush.on("brushend.chart", function () {
             if (brush.empty()) {
                 var div = d3.select(this.parentNode.parentNode.parentNode);
                 div.select(".title a").style("display", "none");
@@ -321,21 +318,21 @@ d3.csv("data/letape2016.json", function(error, participants) {
 
 
 
-        chart.tickValues = function(_) {
+        chart.tickValues = function (_) {
             axis.tickValues(_);
             return chart;
         };
-        chart.xTickFormat = function(_) {
+        chart.xTickFormat = function (_) {
             axis.tickFormat(_);
             return chart;
         };
-        chart.margin = function(_) {
+        chart.margin = function (_) {
             if (!arguments.length) return margin;
             margin = _;
             return chart;
         };
 
-        chart.x = function(_) {
+        chart.x = function (_) {
             if (!arguments.length) return x;
             x = _;
             axis.scale(x);
@@ -343,19 +340,19 @@ d3.csv("data/letape2016.json", function(error, participants) {
             return chart;
         };
 
-        chart.y = function(_) {
+        chart.y = function (_) {
             if (!arguments.length) return y;
             y = _;
             return chart;
         };
 
-        chart.dimension = function(_) {
+        chart.dimension = function (_) {
             if (!arguments.length) return dimension;
             dimension = _;
             return chart;
         };
 
-        chart.filter = function(_) {
+        chart.filter = function (_) {
             if (_) {
                 brush.extent(_);
                 dimension.filterRange(_);
@@ -367,13 +364,13 @@ d3.csv("data/letape2016.json", function(error, participants) {
             return chart;
         };
 
-        chart.group = function(_) {
+        chart.group = function (_) {
             if (!arguments.length) return group;
             group = _;
             return chart;
         };
 
-        chart.round = function(_) {
+        chart.round = function (_) {
             if (!arguments.length) return round;
             round = _;
             return chart;
